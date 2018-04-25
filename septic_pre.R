@@ -113,7 +113,7 @@ unknown <- c('UNKNOWN/NOT SPECIFIED','PATIENT DECLINED TO ANSWER','UNABLE TO OBT
 
 demo_ethnic <- demo %>%
   mutate(ethnic = case_when(ethnicity_descr %in% white ~'white',
-                            ethnicity_descr %in% black ~'blacd',
+                            ethnicity_descr %in% black ~'black',
                             ethnicity_descr %in% asian ~'asian',
                             ethnicity_descr %in% hispanic ~'hispanic',
                             ethnicity_descr %in% others ~'others',
@@ -173,7 +173,7 @@ extract_vital <- function(id,vitalname){
 
 items <- list(456,211,618,646,678)
 signs <- list('blood.pressure','heart.rate','respiratory.rate',
-              ' oxygen.saturation','temperature')
+              'oxygen.saturation','temperature')
 temp <- as_data_frame()
 
 for(i in 1:len(items)){

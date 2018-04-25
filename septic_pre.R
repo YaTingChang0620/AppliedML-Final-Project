@@ -1,7 +1,7 @@
 library(tidyverse)
 library(data.table)
 library(rowr)
-
+setwd("/Users/michellehsu/Desktop/Sepsis") 
 # read files
 icd9 <- read_csv('icd9.csv') 
 demo <- read_csv('demographic_detail.csv')

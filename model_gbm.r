@@ -5,6 +5,8 @@ library(DMwR)
 # library(ROCR)
 
 df <- read_rds('df_imputed.rds')
+df %>% colnames()
+
 col <- c('diabetes','kidney','lung', 'asian', 'black','hispanic', 'others', 'unknown', 'white', 'sex','SepticShock', 'Sepsis', 'SeverSepsis')
 df[col] = lapply(df[col],factor)
 

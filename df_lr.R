@@ -1,6 +1,7 @@
 library(tidyverse)
 library(data.table)
-library(rowr)
+library(magrittr)
+
 # read files
 icd9 <- read_csv('icd9.csv') 
 demo <- read_csv('demographic_detail.csv')
@@ -11,20 +12,6 @@ demo_item <- read_csv('d_demographicitems.csv')
 demo_event <- read_csv('demographicevents.csv')
 demo_patient <- read_csv('d_patients.csv')
 vital <- read_rds('vital_sign.rds')
-
-
-### 
-# chart <- read_csv('d_chartitems.csv')
-# labitem <- read_csv("d_labitems.csv")
-# micro <- read_csv('microbiologyevents.csv')
-# meditem <- read_csv('d_meditems.csv')
-# drgevent <- read_csv('drgevents.csv')
-# medevent <- read_csv('medevents.csv')
-# procedure <- read_csv('procedureevents.csv')
-
-# read chronic disease indicator 
-# (source: https://www.hcup-us.ahrq.gov/toolssoftware/chronic/chronic.jsp)
-# 0 - non-chronic; 1 - chronic
 chronic <- read_csv('cci2015.csv',col_names = TRUE)
 colnames(chronic) <- c('code','description','chronic_i','body_system')
 # remove '' and whitespace
@@ -61,9 +48,6 @@ chronic <- c(kidney,diabetes,lung)
 target <- c(995.91,995.92,785.52)
 
 
-
-
-
 ########### Feature: chronic disease ########### 
 # filter hospitalization with chronic disease 
 pt_chronic <- icd9 %>%
@@ -76,14 +60,7 @@ pt_chronic_one <- pt_chronic %>%
                              code %in% lung ~ 'lung',
                              TRUE ~ 'kidney')) %>%
   select(hadm_id,disease) %>% 
-  unique() %>%  # account for one patient with two kinds of diabetes/kidney/lung
-  mutate(n = 1) %>% spread(key = disease, value = n, fill = 0) 
-
-hadm <- pt_chronic_one %>% select(hadm_id)
-
-
-
-
+  unique() # account for one patient with two kinds of diabetes/kidney/lung
 
 ########### outcome: severe sepsis, septic shock ########### 
 # Three targets
@@ -98,9 +75,6 @@ pt_target <- pt_chronic %>%
 pt_chronic_one %>% is.na() %>% sum() # make sure no NA in the original data 
 pt_chronic_one <- pt_chronic_one %>% left_join(pt_target,by='hadm_id')
 pt_chronic_one <- pt_chronic_one  %>% replace_na(list('SepticShock' = 0,'SeverSepsis' =0,'Sepsis'=0))
-
-
-
 
 
 ########### Feature: demongraphic ########### 
@@ -119,18 +93,10 @@ demo_ethnic <- demo %>%
                             ethnicity_descr %in% hispanic ~'hispanic',
                             ethnicity_descr %in% others ~'others',
                             ethnicity_descr %in% unknown ~'unknown')) %>%
-  select(subject_id,hadm_id,ethnic) %>%
-  mutate(n = 1)
-
-demo_one <- demo_ethnic %>% spread(key=ethnic,value = n,fill = 0) %>% select(-subject_id)
-
-# check one person belongs to one race 
-# demo_one %>%
-#   select(-hadm_id) %>% 
-#   mutate(t = rowSums(.)) %>% select(t) %>% filter(t == 1)
+  select(hadm_id,ethnic) 
 
 #### FINAL : join
-pt_chronic_one <- pt_chronic_one %>% left_join(demo_one,by='hadm_id')
+pt_chronic_one <- pt_chronic_one %>% left_join(demo_ethnic,by='hadm_id')
 
 # extract year of charttime
 charttime <- labevent %>%
@@ -146,53 +112,36 @@ dob.gender <- demo_patient %>% select(subject_id,sex,dob)
 # age
 age <- charttime %>% left_join(dob.gender,by='subject_id')
 age.gender<- age %>% mutate(dob = year(dob),
-               age = year_chart - dob) %>%
+                            age = year_chart - dob) %>%
   select(hadm_id,sex,age)
 
 #### FINAL : join
-pt_chronic_one <- pt_chronic_one %>% left_join(age.gender,by='hadm_id')
+pt_chronic_one <- pt_chronic_one %>%
+  left_join(age.gender,by='hadm_id')
 
 
+##############################################
+# check missing value
+apply(pt_chronic_one,2,function(x){sum(is.na(x))})
+
+pt_chronic_one %>%
+  group_by(sex) %>%
+  summarise(n = n()) #male
+median(pt_chronic_one$age,na.rm = TRUE) #72
+
+# impute missing value 
+pt_chronic_one <- pt_chronic_one %>% replace_na(list(sex = 'M',age = 72))
+str(pt_chronic_one)
+
+################################################
+# transform data type
+pt_chronic_one %>% colnames()
+f <- c('disease',"SepticShock",'Sepsis','SeverSepsis','ethnic','sex')
+pt_chronic_one[f] <- lapply(pt_chronic_one[f],factor)
+# pt_chronic_one %<>%
+#   mutate_at(f,funs(factor(.)))
 
 
+write_rds(pt_chronic_one,'df_lr.rds')
 
 
-########### Feature: vital sign  ########### 
-# blood pressure(52), heart rate(211), respiratory rate(618)
-# oxygen saturation (834), temperature(678)
-
-icu <- icustay_detail %>% select(hadm_id,icustay_id) # a hamd_id may correspond to many icustay_id
-vital_hadm <- vital %>% left_join(icu,by='icustay_id') # vital doesn't have hadm_id
-
-extract_vital <- function(id,vitalname){
-  temp <- vital_hadm %>% filter(!is.na(itemid) & itemid == id) %>%
-    group_by(hadm_id) %>%
-    summarise(n = mean(value1num,na.rm=TRUE))
-  colnames(temp) <- c('hadm_id',vitalname)
-  return(temp)
-}
-
-items <- list(456,211,618,646,678)
-signs <- list('blood.pressure','heart.rate','respiratory.rate',
-              'oxygen.saturation','temperature')
-temp <- as_data_frame()
-
-for(i in 1:len(items)){
-  if(i==1){
-    # print(i,'',signs[[i]])
-    temp = extract_vital(items[[i]],signs[[i]])
-    vitalsign <- hadm %>% left_join(temp,by='hadm_id')
-  }else{
-    temp = extract_vital(items[[i]],signs[[i]])
-    vitalsign <- vitalsign %>% left_join(temp,by='hadm_id')
-  }
-}
-apply(vitalsign,2,function(x){sum(is.na(x))/1590})
-pt_chronic_one <- pt_chronic_one %>% left_join(vitalsign,by='hadm_id')
-
-write_rds(pt_chronic_one,'cleaning_final.rds')
-
-
-#################### THINGS TO DO
-# 1. all data frames' column name
-# 2. argument to summarise's column name

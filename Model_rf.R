@@ -11,9 +11,8 @@ loadlibs(libs)
 
 ###Data preprocess
 df <- read_rds('df_imputed.rds')
-df = rename(df, 'oxygen.saturation' = ' oxygen.saturation')
 colnames(df)
-col <- c('diabetes','kidney','lung', 'asian', 'blacd','hispanic', 'others', 'unknown', 'white', 'sex','SepticShock', 'Sepsis', 'SeverSepsis')
+col <- c('diabetes','kidney','lung', 'asian', 'black','hispanic', 'others', 'unknown', 'white', 'sex','SepticShock', 'Sepsis', 'SeverSepsis')
 df[col] = lapply(df[col],factor)
 summary(df)
 df = df %>% select(-hadm_id)
@@ -46,7 +45,7 @@ nb_sepsis
 pred_nb_sepsis=predict(nb_sepsis, test_sepsis)
 #Confusion matrix to check accuracy
 cm_nb_sepsis = table(pred_nb_sepsis,test_sepsis$Sepsis)
-nb_accuracy_sepsis = sum(diag(cm_nb_sepsis))/sum(cm_nb_sepsis) #Accuracy: 0.75
+nb_accuracy_sepsis = sum(diag(cm_nb_sepsis))/sum(cm_nb_sepsis)
 
 #Random Forest for Sepsis
 result_sepsis = data.frame(tree = double(),
@@ -59,22 +58,28 @@ for (treenum in seq(from = 10, to = 300, by = 10)){#number of tree
   }
 }
 
+#Plot heatmap
+p1 = ggplot(result_sepsis, aes(result_sepsis[2], result_sepsis[1])) +
+  geom_tile(aes(fill = result_sepsis[3])) +
+  scale_fill_gradient(high = "#132B43", low = "#56B1F7")
+p1 + labs(title = "Random Forest (Sepsis)", x = "number of nodes", y = "number of trees", fill = "Accuracy")
+
 #identify the best parameters
 result_sepsis %>%
-  filter(accuracy_rate == max(accuracy_rate)) #0.7998829
-#tuned tree with 120 trees and maxnodes of 16
-rf_sepsis = randomForest(train_x_sepsis,train_y_sepsis$Sepsis, maxnodes = 16, ntree=120)
+  filter(accuracy_rate == max(accuracy_rate)) 
+#tuned tree with 20 trees and maxnodes of 16
+rf_sepsis = randomForest(train_x_sepsis,train_y_sepsis$Sepsis, maxnodes = 16, ntree=20)
 varImpPlot(rf_sepsis)
 rf_sepsis$importance
 CM_sepsis= rf_sepsis$confusion
-sum(diag(CM_sepsis))/sum(CM_sepsis) #0.7845926
+sum(diag(CM_sepsis))/sum(CM_sepsis) 
 #Prediction 
 pred.rf.sepsis = predict(rf_sepsis, test_x_sepsis, type = "prob")[,2] %>% as_tibble() 
 colnames(pred.rf.sepsis)[1] = "value"
 pred.rf.sepsis = pred.rf.sepsis %>%  mutate(truth = test_y_sepsis$Sepsis, rp_guess = value > 0.5)
 rf_accuracy_sepsis = pred.rf.sepsis %>% select(-value) %>% table() %>%
   (function(.) sum(diag(.))/sum(.))(.)
-rf_accuracy_sepsis #0.7865854
+rf_accuracy_sepsis 
 #ROC 
 auc_rf_sepsis = roc(test_y_sepsis$Sepsis, pred.rf.sepsis$value)
 print(auc_rf_sepsis)
@@ -107,7 +112,7 @@ nb_severe
 pred_nb_severe=predict(nb_severe, test_severe)
 #Confusion matrix to check accuracy
 cm_nb_severe = table(pred_nb_severe,test_severe$SeverSepsis)
-nb_accuracy_severe = sum(diag(cm_nb_severe))/sum(cm_nb_severe) #Accuracy: 0.7029703
+nb_accuracy_severe = sum(diag(cm_nb_severe))/sum(cm_nb_severe) 
 
 #Random Forest
 result_severe = data.frame(tree = double(),
@@ -120,22 +125,28 @@ for (treenum in seq(from = 10, to =300, by = 10)){#number of tree
   }
 }
 
+#Plot heatmap
+p2 = ggplot(result_severe, aes(result_severe[2], result_severe[1])) +
+  geom_tile(aes(fill = result_severe[3])) +
+  scale_fill_gradient(high = "#132B43", low = "#56B1F7")
+p2 + labs(title = "Random Forest (Severe Sepsis)", x = "number of nodes", y = "number of trees", fill = "Accuracy")
+
 #identify the best parameters
 result_severe %>%
   filter(accuracy_rate == max(accuracy_rate))
-#tuned tree with 270 trees and maxnodes of 16
-rf_severe = randomForest(train_x_severe,train_y_severe$SeverSepsis, maxnodes = 16, ntree=270)
+#tuned tree with 290 trees and maxnodes of 16
+rf_severe = randomForest(train_x_severe,train_y_severe$SeverSepsis, maxnodes = 16, ntree=290)
 varImpPlot(rf_severe)
 rf_severe$importance
 CM_severe= rf_severe$confusion
-sum(diag(CM_severe))/sum(CM_severe) #0.7233292
+sum(diag(CM_severe))/sum(CM_severe)
 #Prediction 
 pred.rf.severe = predict(rf_severe, test_x_severe, type = "prob")[,2] %>% as_tibble() 
 colnames(pred.rf.severe)[1] = "value"
 pred.rf.severe = pred.rf.severe %>%  mutate(truth = test_y_severe$SeverSepsis, rp_guess = value > 0.5)
 rf_accuracy_severe = pred.rf.severe %>% select(-value) %>% table() %>%
   (function(.) sum(diag(.))/sum(.))(.)
-rf_accuracy_severe #0.7392739
+rf_accuracy_severe 
 #ROC 
 auc_rf_severe = roc(test_y_severe$SeverSepsis, pred.rf.severe$value)
 print(auc_rf_severe)
@@ -168,7 +179,7 @@ nb_shock
 pred_nb_shock=predict(nb_shock, test_shock)
 #Confusion matrix to check accuracy
 cm_nb_shock = table(pred_nb_shock,test_shock$SepticShock)
-nb_accuracy_shock = sum(diag(cm_nb_shock))/sum(cm_nb_shock) #Accuracy:0.7269841
+nb_accuracy_shock = sum(diag(cm_nb_shock))/sum(cm_nb_shock) 
 
 #Random Forest
 result_shock = data.frame(tree = double(),
@@ -180,16 +191,21 @@ for (treenum in seq(from = 10, to =300, by = 10)){#number of tree
     result_shock= rbind(result_shock, data.frame(tree = treenum, node = node, accuracy_rate =(sum(diag(rf$confusion)))/sum(rf$confusion)))
   }
 }
+#Plot heatmap
+p3 = ggplot(result_shock, aes(result_shock[2], result_shock[1])) +
+  geom_tile(aes(fill = result_shock[3])) +
+  scale_fill_gradient(high = "#132B43", low = "#56B1F7")
+p3 + labs(title = "Random Forest (Septic Shock)", x = "number of nodes", y = "number of trees", fill = "Accuracy")
 
 #identify the best parameters
 result_shock %>%
   filter(accuracy_rate == max(accuracy_rate))
-#tuned tree with 220 trees and maxnodes of 16
-rf_shock = randomForest(train_x_shock,train_y_shock$SepticShock, maxnodes = 16, ntree=220)
+#tuned tree with 40 trees and maxnodes of 16
+rf_shock = randomForest(train_x_shock,train_y_shock$SepticShock, maxnodes = 16, ntree=40)
 varImpPlot(rf_shock)
 rf_shock$importance
 CM_shock= rf_shock$confusion
-sum(diag(CM_shock))/sum(CM_shock) #0.7924329
+sum(diag(CM_shock))/sum(CM_shock)
 
 #Prediction 
 pred.rf.shock = predict(rf_shock, test_x_shock, type = "prob")[,2] %>% as_tibble() 
@@ -197,12 +213,12 @@ colnames(pred.rf.shock)[1] = "value"
 pred.rf.shock = pred.rf.shock %>%  mutate(truth = test_y_shock$SepticShock, rp_guess = value > 0.5)
 rf_accuracy_shock = pred.rf.shock %>% select(-value) %>% table() %>%
   (function(.) sum(diag(.))/sum(.))(.)
-rf_accuracy_shock #0.784127
+rf_accuracy_shock 
 #ROC 
 auc_rf_shock = roc(test_y_shock$SepticShock, pred.rf.shock$value)
 print(auc_rf_shock)
 plot(auc_rf_shock, ylim=c(0,1), print.thres=TRUE, main=paste('AUC:',round(auc_rf_shock$auc[[1]],2)))
-#######################################################################################################################
+#############################################################################################################################
 ###Summary for random forest
 rf_summary = data.frame(target = character(),
                            NB_accuracy = double(), 

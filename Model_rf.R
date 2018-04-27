@@ -21,13 +21,16 @@ df = df %>% select(-hadm_id)
 ##1.Sepsis
 sepsis = df %>% select(-SepticShock, -SeverSepsis)
 sepsis %>%
-  group_by(Sepsis) %>% count()
+  group_by(Sepsis) %>% 
+  count() %>%
+  mutate(percentage = n/nrow(sepsis))
 
 #imbalanced data processing for sepsis: SMOTE
 new_sepsis = SMOTE(Sepsis ~.,sepsis, perc.over = 1000, perc.under = 300)
 new_sepsis %>%
-  group_by(Sepsis) %>% count()
-#mean: (440/1640) = 0.2682927
+  group_by(Sepsis) %>% 
+  count() %>%
+  mutate(percentage = n/nrow(new_sepsis))
 
 #train-test split
 idx = createDataPartition(new_sepsis$Sepsis, p = 0.8, list = FALSE)
@@ -67,9 +70,9 @@ p1 + labs(title = "Random Forest (Sepsis)", x = "number of nodes", y = "number o
 #identify the best parameters
 result_sepsis %>%
   filter(accuracy_rate == max(accuracy_rate)) 
-#tuned tree with 20 trees and maxnodes of 16
-rf_sepsis = randomForest(train_x_sepsis,train_y_sepsis$Sepsis, maxnodes = 16, ntree=20)
-varImpPlot(rf_sepsis)
+#tuned tree with 50 trees and maxnodes of 15
+rf_sepsis = randomForest(train_x_sepsis,train_y_sepsis$Sepsis, maxnodes = 15, ntree=50)
+varImpPlot(rf_sepsis, main = "Feature Importance")
 rf_sepsis$importance
 CM_sepsis= rf_sepsis$confusion
 sum(diag(CM_sepsis))/sum(CM_sepsis) 
@@ -88,13 +91,16 @@ plot(auc_rf_sepsis, ylim=c(0,1), print.thres=TRUE, main=paste('AUC:',round(auc_r
 ##2.Servere sepsis
 severe = df %>% select(-SepticShock, -Sepsis)
 severe %>%
-  group_by(SeverSepsis) %>% count()
+  group_by(SeverSepsis) %>% 
+  count() %>%
+  mutate(percentage = n/nrow(severe))
 
 #imbalanced data processing for servere sepsis: SMOTE
 new_severe = SMOTE(SeverSepsis ~.,severe, perc.over = 200, perc.under = 200)
 new_severe %>%
-  group_by(SeverSepsis) %>% count()
-#mean: (651/1519) = 0.4285714
+  group_by(SeverSepsis) %>% 
+  count() %>%
+  mutate(percentage = n/nrow(new_severe))
 
 #train-test split
 idx = createDataPartition(new_severe$SeverSepsis, p = 0.8, list = FALSE)
@@ -155,12 +161,16 @@ plot(auc_rf_severe, ylim=c(0,1), print.thres=TRUE, main=paste('AUC:',round(auc_r
 ##3.Septic shock
 shock = df %>% select(-SeverSepsis, -Sepsis)
 shock %>%
-  group_by(SepticShock) %>% count()
+  group_by(SepticShock) %>%
+  count() %>%
+  mutate(percentage = n/nrow(shock))
 
 #imbalanced data processing for septic shock: SMOTE
 new_shock = SMOTE(SepticShock ~.,shock, perc.over = 350, perc.under = 350)
 new_shock %>%
-  group_by(SepticShock) %>% count()
+  group_by(SepticShock) %>% 
+  count() %>%
+  mutate(percentage = n/nrow(new_shock))
 #mean: (436/1580) = 0.2759494
 
 #train-test split

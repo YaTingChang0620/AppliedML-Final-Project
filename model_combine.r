@@ -30,10 +30,10 @@ test_sepsis <- new_sepsis[-splitIndex,]
 fitControl <- trainControl(method = 'cv', 
                            number = 5) # 5 folds
 
-grid <- expand.grid(n.trees = seq(100,5000,100), # number of boosting iteration
-                    interaction.depth = seq(2,10,1), # Max tree depth
+grid <- expand.grid(n.trees = seq(100,4000,500), # number of boosting iteration
+                    interaction.depth = seq(5,30,5), # max tree depth
                     shrinkage = .001, #learning rate
-                    n.minobsinnode = 20)  # Min.Terminated node size 
+                    n.minobsinnode = 30)  # Min.Terminated node size 
 set.seed(12345)
 fit.gbm <- train(Sepsis ~ ., data=train_sepsis, 
                  method = 'gbm', 
@@ -41,6 +41,11 @@ fit.gbm <- train(Sepsis ~ ., data=train_sepsis,
                  tuneGrid=grid, 
                  metric = 'Accuracy',
                  verbose = FALSE)
+png('cv_gbm_sepsis.png')
+plot(fit.gbm)
+fit.gbm$bestTune
+dev.off()
+
 
 ######### Within model evaluation
 # heatmap
@@ -54,11 +59,14 @@ gbm_sepsis_heatmap <- fit.gbm$results %>%
   theme_minimal() +
   ggtitle('gbm_sepsis') +
   theme(plot.title = element_text(hjust=0.5))
+# gbm_sepsis_heatmap
 ggsave("gbm_sepsis_heatmap.png", plot = gbm_sepsis_heatmap, units = "in", width=8, height = 6)
 
 # density
 trellis.par.set(caretTheme())
-densityplot(fit.gbm, pch = "|")
+png('sepsis_gbm.png')
+densityplot(fit.gbm, pch = "|", col = 'black')
+dev.off()
 
 ######### Choosing the final model
 # confusion matrix
@@ -69,7 +77,7 @@ confusionMatrix(data = gbm_pred$value, reference = test_sepsis$Sepsis,mode = "pr
 # roc curve
 auc_gbm_sepsis <- roc(test_sepsis$Sepsis, gbm_pred_roc$value)
 png('gbm_sepsis_auc.png')
-plot(auc_gbm_sepsis,ylim = c(0,1), print.thres = TRUE, main = 'gbm_sepsis')
+plot(auc_gbm_sepsis,ylim = c(0,1), print.thres = TRUE)
 auc_ = round(auc_gbm_sepsis$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz=TRUE)
 dev.off()
@@ -93,10 +101,10 @@ test_shock <- new_septicshock[-splitIndex,]
 fitControl <- trainControl(method = 'cv', 
                            number = 5) # 5 folds
 
-grid <- expand.grid(n.trees = seq(100,5000,100), # number of boosting iteration
-                    interaction.depth = seq(2,10,1), # Max tree depth
+grid <- expand.grid(n.trees = seq(100,4000,500), # number of boosting iteration
+                    interaction.depth = seq(5,30,5), # Max tree depth
                     shrinkage = .001, #learning rate
-                    n.minobsinnode = 20)  # Min.Terminated node size 
+                    n.minobsinnode = 30)  # Min.Terminated node size 
 set.seed(12345)
 fit.gbm.shock <- train(SepticShock ~ ., data=train_shock, 
                  method = 'gbm', 
@@ -104,6 +112,8 @@ fit.gbm.shock <- train(SepticShock ~ ., data=train_shock,
                  tuneGrid=grid, 
                  metric = 'Accuracy',
                  verbose = FALSE)
+fit.gbm.shock$bestTune
+plot(fit.gbm.shock)
 
 ######### Within model evaluation
 # heatmap
@@ -122,7 +132,9 @@ ggsave("gbm_shock_heatmap.png", plot = gbm_shock_heatmap, units = "in", width=8,
 
 # density
 trellis.par.set(caretTheme())
-densityplot(fit.gbm.shock, pch = "|")
+png('shock_gbm.png')
+densityplot(fit.gbm.shock, pch = "|",col = 'black')
+dev.off()
 
 ######### Choosing the final model
 # confusion matrix
@@ -133,7 +145,7 @@ confusionMatrix(data = gbm_pred$value, reference = test_shock$SepticShock,mode =
 # roc curve
 auc_gbm_shock <- roc(test_shock$SepticShock, gbm_pred_roc$value)
 png('gbm_shock_auc.png')
-plot(auc_gbm_shock,ylim = c(0,1), print.thres = TRUE, main = 'gbm_septic_shock')
+plot(auc_gbm_shock,ylim = c(0,1), print.thres = TRUE)
 auc_ = round(auc_gbm_shock$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz=TRUE)
 dev.off()
@@ -156,10 +168,10 @@ test_severe <- new_severe[-splitIndex,]
 fitControl <- trainControl(method = 'cv', 
                            number = 5) # 5 folds
 
-grid <- expand.grid(n.trees = seq(100,5000,100), # number of boosting iteration
-                    interaction.depth = seq(2,10,1), # Max tree depth
+grid <- expand.grid(n.trees = seq(100,4000,500), # number of boosting iteration
+                    interaction.depth = seq(5,30,5), # Max tree depth
                     shrinkage = .001, #learning rate
-                    n.minobsinnode = 20)  # Min.Terminated node size 
+                    n.minobsinnode = 30)  # Min.Terminated node size 
 set.seed(12345)
 fit.gbm.severe <- train(SeverSepsis ~ ., data=train_severe, 
                        method = 'gbm', 
@@ -167,6 +179,7 @@ fit.gbm.severe <- train(SeverSepsis ~ ., data=train_severe,
                        tuneGrid=grid, 
                        metric = 'Accuracy',
                        verbose = FALSE)
+
 
 ######### Within model evaluation
 # heatmap
@@ -196,11 +209,11 @@ confusionMatrix(data = gbm_pred$value, reference = test_severe$SeverSepsis,mode 
 # roc curve
 auc_gbm_severe <- roc(test_severe$SeverSepsis, gbm_pred_roc$value)
 png('gbm_severe_auc.png')
-plot(auc_gbm_severe,ylim = c(0,1), print.thres = TRUE, main = 'gbm_severe_sepsis')
+plot(auc_gbm_severe,ylim = c(0,1), print.thres = TRUE)
 auc_ = round(auc_gbm_severe$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz=TRUE)
 dev.off()
-auc_ 
+
 ##############################################################
 ###Data preprocess
 df <- read_rds('df_imputed.rds')
@@ -271,7 +284,7 @@ result_sepsis %>%
 #tuned tree with 20 trees and maxnodes of 16
 rf_sepsis = randomForest(train_x_sepsis,train_y_sepsis$Sepsis, maxnodes = 16, ntree=20)
 png('rf_var_sepsis.png')
-varImpPlot(rf_sepsis,main = 'sepsis_varImportance')
+varImpPlot(rf_sepsis,main = ' ')
 dev.off()
 
 rf_sepsis$importance
@@ -290,7 +303,7 @@ auc_rf_sepsis = roc(test_y_sepsis$Sepsis, pred.rf.sepsis$value)
 print(auc_rf_sepsis)
 
 png('rf_sepsis_auc.png')
-plot(auc_rf_sepsis, ylim=c(0,1), print.thres=TRUE, main='rf_sepsis')
+plot(auc_rf_sepsis, ylim=c(0,1), print.thres=TRUE)
 auc_ = round(auc_rf_sepsis$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz = TRUE)
 dev.off()
@@ -356,7 +369,7 @@ result_severe %>%
 #tuned tree with 290 trees and maxnodes of 16
 rf_severe = randomForest(train_x_severe,train_y_severe$SeverSepsis, maxnodes = 16, ntree=290)
 png('rf_var_severe.png')
-varImpPlot(rf_severe,main = 'severe_varImportance')
+varImpPlot(rf_severe,main = ' ')
 dev.off()
 
 
@@ -374,7 +387,7 @@ rf_accuracy_severe
 auc_rf_severe = roc(test_y_severe$SeverSepsis, pred.rf.severe$value)
 print(auc_rf_severe)
 png('rf_severe_auc.png')
-plot(auc_rf_severe, ylim=c(0,1), print.thres=TRUE, main='rf_severe')
+plot(auc_rf_severe, ylim=c(0,1), print.thres=TRUE)
 auc_ = round(auc_rf_severe$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz = TRUE)
 dev.off()
@@ -441,7 +454,7 @@ rf_shock = randomForest(train_x_shock,train_y_shock$SepticShock, maxnodes = 16, 
 
 
 png('rf_var_shock.png')
-varImpPlot(rf_shock,main = 'shock_varImportance')
+varImpPlot(rf_shock,main = ' ')
 dev.off()
 
 rf_shock$importance
@@ -459,7 +472,7 @@ rf_accuracy_shock
 auc_rf_shock = roc(test_y_shock$SepticShock, pred.rf.shock$value)
 print(auc_rf_shock)
 png('rf_shock_auc.png')
-plot(auc_rf_shock, ylim=c(0,1), print.thres=TRUE, main='rf_shock')
+plot(auc_rf_shock, ylim=c(0,1), print.thres=TRUE)
 auc_ = round(auc_rf_shock$auc,2)
 legend('bottomright',legend = c('AUC:',auc_),horiz = TRUE)
 dev.off()

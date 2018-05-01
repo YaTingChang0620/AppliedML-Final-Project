@@ -1,0 +1,16 @@
+\begin{thebibliography}{2}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem{cite1}
+Senthil K. Nachimuthu, Peter J. Haug 
+
+\bibitem[Name1 et~al.(2016)Name1, Name2, and Name3]{cite2}
+Name1, Name2, and Name3.
+\newblock The title of said publication.
+\newblock In \emph{Publishing Venue}, pages 123--345, 2016.
+
+\end{thebibliography}

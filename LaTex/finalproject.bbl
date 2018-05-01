@@ -1,0 +1,31 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Singer et~al.(2016)Singer, Deutschman, and Seymour]{cite2}
+Mervyn Singer, Clifford~S. Deutschman, and Christopher~Warren Seymour.
+\newblock The third international consensus definitions for sepsis and septic
+  shock (sepsis-3).
+\newblock 2016.
+
+\bibitem[Bhattacharjee et~al.(2017)Bhattacharjee, Edelson, and Churpek]{cite1}
+Poushali Bhattacharjee, Dana~P. Edelson, and Matthew~M. Churpek.
+\newblock Identifying patients with sepsis on the hospital wards.
+\newblock 2017.
+
+\bibitem[Nachimuthu and Haug(2012)]{cite3}
+Senthil~K. Nachimuthu and Peter~J. Haug.
+\newblock Early detection of sepsis in the emergency department using dynamic
+  bayesian networks.
+\newblock 2012.
+
+\bibitem[Qingqing~Mao(2018)]{cite6}
+Jana L~Hoffman Qingqing~Mao, Melissa~Jay.
+\newblock Multicentre validation of a sepsis prediction algorithm using only
+  vital sign data in the emergency department, general ward and icu.
+\newblock 2018.
+
+\end{thebibliography}

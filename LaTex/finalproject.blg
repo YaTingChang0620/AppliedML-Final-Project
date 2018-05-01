@@ -1,0 +1,12 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: finalproject.aux
+The style file: unsrtnat.bst
+Illegal, another \bibstyle command---line 85 of file finalproject.aux
+ : \bibstyle
+ :          {plain}
+I'm skipping whatever remains of this command
+Database file #1: sample.bib
+Warning--empty journal in cite2
+Warning--empty journal in cite1
+Warning--empty journal in cite3
+Warning--empty journal in cite6
+(There was 1 error message)
